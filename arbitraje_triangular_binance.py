@@ -17,42 +17,14 @@ test_access_key = ''
 test_secret_key = ''
 global client
 Symbol_Base = "USDT"
-Capital_Inicial = 20.0
-USE_TESNET = False
-OnlineMode = False
+Capital_Inicial = 20.1
+USE_TESNET = True
+OnlineMode = True
 cada_segundos = 100
 Repetir = True
 UsarBNB = False
 GananciaTotal = 0
 
-def round_down(quantity, decimal_places):
-    factor = 10 ** decimal_places
-    return math.floor(quantity * factor) / factor
-
-def check_notional(symbol1, bid_price1, Compra1, symbol2, bid_price2, Compra2, symbol3, ask_price3, Venta1):
-    symbols_with_prices = [(symbol1, bid_price1, Compra1), (symbol2, bid_price2, Compra2), (symbol3, ask_price3, Venta1)]
-    r = True
-    # Iterate over each symbol and its corresponding bid price
-    for symbol, bid_price, monto in symbols_with_prices:
-        # Get symbol information
-        info = client.get_symbol_info(symbol)
-        
-        step_size = [Decimal(_['stepSize']) for _ in info['filters'] if _['filterType'] == 'LOT_SIZE'][0] #lot_size_data['stepSize']
-        minNotional = [Decimal(_['minNotional']) for _ in info['filters'] if _['filterType'] == 'NOTIONAL'][0]
-        min_qty = [Decimal(_['minQty']) for _ in info['filters'] if _['filterType'] == 'LOT_SIZE'][0] #lot_size_data['minQty']
-        
-        # Calculate the notional value
-        bid_price_decimal = Decimal(bid_price)
-        notional_value = Decimal(monto) * bid_price_decimal
-        
-        # Check if notional value meets the minimum notional requirement
-        if notional_value < minNotional:
-            print(symbol, "no pasa el notional", notional_value, minNotional, bid_price)
-            r = False
-            break    
-    return r
-   
-        
 def GetPresicion(symbol, cantidad, price):
     if OnlineMode:
         info = client.get_symbol_info(symbol)
@@ -63,11 +35,9 @@ def GetPresicion(symbol, cantidad, price):
         minNotional = [Decimal(_['minNotional']) for _ in info['filters'] if _['filterType'] == 'NOTIONAL'][0]
         cantidad = (Decimal(cantidad) // step_size) * step_size
         # Ensure quantity is within allowed range
-        cantidad = max((min_qty), min(cantidad, (max_qty)))
-        
+        cantidad = max((min_qty), min(cantidad, (max_qty)))        
     return cantidad
-    
-   
+
 def test_api_key(client, BinanceAPIException):
     """Checks to see if API keys supplied returns errors
 
@@ -82,9 +52,7 @@ def test_api_key(client, BinanceAPIException):
         client.get_account()
         return True, "API key validated succesfully"
     
-    except BinanceAPIException as e:   
-    
-      
+    except BinanceAPIException as e:         
         if e.code in  [-2015,-2014]:
             bad_key = "Your API key is not formatted correctly..."
             america = "If you are in america, you will have to update the config to set AMERICAN_USER: True"
@@ -123,7 +91,7 @@ def CrearConeccionBinance():
             if api_ready is not True:
                 exit(f'{msg}') 
             
-def GetLastOrderInfo():
+def GetLastOrderInfo(symbol1):
     if OnlineMode:
         orders = client.get_all_orders(symbol=symbol1, limit=1)
         # Iterar sobre cada pedido en la lista
@@ -135,7 +103,7 @@ def GetLastOrderInfo():
             status = order['status']
             Cumulative = order["cummulativeQuoteQty"]
             # y así sucesivamente para cada campo disponible en el diccionario
-            print(f"Order ID: {order_id}, Symbol: {symbol}, Monto: {monto} ,Status: {status}, Cumulative: {Cumulative}")
+            print(f"\t \t Order ID: {order_id}, Symbol: {symbol}, Monto: {monto} ,Status: {status}") #, Cumulative: {Cumulative}")
         
 while Repetir:
     CrearConeccionBinance()
@@ -151,7 +119,7 @@ while Repetir:
         prices = response.json()
 
     all_prices = [price for price in prices]
-    bol_prices = [price for price in prices if price["symbol"].endswith(Symbol_Base) or price["symbol"].startswith(Symbol_Base) ]
+    bol_prices = [price for price in prices if price["symbol"].endswith(Symbol_Base)]
 
     # Analiza cada combinación de tres criptomonedas para determinar si existe una oportunidad de arbitraje
     for i in range(len(bol_prices)):
@@ -170,13 +138,13 @@ while Repetir:
                 # Obtiene los precios de compra y venta de la tercera criptomoneda
                 symbol3 = bol_prices[k]["symbol"]
                 bid_price3 = float(bol_prices[k]["bidPrice"])
-                ask_price3 = float(bol_prices[k]["askPrice"])
-                                
+                ask_price3 = float(bol_prices[k]["askPrice"])                
+                
                 
                 # Verifica si el primer símbolo comienza con "USDT" y el tercer símbolo termina con "USDT"
                 if symbol1.endswith(Symbol_Base) and symbol2.endswith(symbol1.replace(Symbol_Base, "")) and symbol3.startswith(symbol2.replace(symbol1.replace(Symbol_Base, ""),"")) and ask_price2!=0 and ask_price3!=0 and bid_price1!=0:
-                    #BTCUSDT   		LTCBTC   		  LTCUSDT 
-                    #COMPRO BTC     COMPRAR LTC       VENDER LTC
+                           #BTCUSDT   		         LTCBTC   		           LTCUSDT 
+                    #COMPRO BTC con USDT     COMPRAR LTC con BTC      VENDER LTC obtengo USDT
 
                     
                     Compra1 = float(Capital_Inicial) / bid_price1 #BTC
@@ -191,19 +159,18 @@ while Repetir:
                     if not UsarBNB and not OnlineMode: Compra2 = Compra2 - Comision2
                     
                     
-                    Venta1 = Compra2 * ask_price3 #USDT
+                    Venta1 = Compra2 #* ask_price3 #USDT
                     Comisionbnb3 = Venta1 * 0.00075
                     Comision3 = Venta1 * 0.001
                     if not UsarBNB and not OnlineMode: Venta2 =  Venta2 - Comision3                     
                     
-                    Ganancia1 = Venta1 - Capital_Inicial
-                    
-                    CN = True #check_notional(symbol1, bid_price1, Compra1, symbol2, bid_price2, Compra2, symbol3, ask_price3, Venta1)
+                    Ganancia1 = (Venta1 * ask_price3) - Capital_Inicial
 
-                    if Venta1 > Capital_Inicial and Ganancia1 > 0.10 and Ganancia1 < 100.0 and CN: 
+                    if Ganancia1 > 0.10 and Ganancia1 < 100.0: 
                         print("\n")
                         print("Existe una oportunidad de arbitraje entre", symbol1, symbol2, symbol3, "con una ganancia de", Ganancia1)
-                        print("Comprando ", symbol1, "Cantidad: ", Compra1, GetPresicion(symbol1, Compra1, bid_price1))
+                        
+                        print("\t Comprando ", symbol1, "Cantidad: ", Compra1, GetPresicion(symbol1, Compra1, bid_price1))
                         if OnlineMode:
                             order_details = client.create_order( 
                                 symbol = symbol1,
@@ -211,10 +178,9 @@ while Repetir:
                                 type = 'MARKET',
                                 quantity = GetPresicion(symbol1, Compra1, bid_price1)
                             )
-                            GetLastOrderInfo()
-                        #print("Balance: ", client.get_asset_balance(asset=symbol1.replace(Symbol_Base, "")), "Compra-Comision1: ", Compra1 - Comision1)
+                            GetLastOrderInfo(symbol1)
                         
-                        print("Comprando ", symbol2, "Cantidad: ", Compra2 ,GetPresicion(symbol2, Compra2, bid_price2))
+                        print("\t Comprando ", symbol2, "Cantidad: ", Compra2 ,GetPresicion(symbol2, Compra2, bid_price2))
                         if OnlineMode:
                             order_details = client.create_order( 
                                 symbol = symbol2,
@@ -222,10 +188,10 @@ while Repetir:
                                 type = 'MARKET',
                                 quantity = GetPresicion(symbol2, Compra2, bid_price2)
                             )
-                            GetLastOrderInfo()
+                            GetLastOrderInfo(symbol2)
                         #print("Balance: ", client.get_asset_balance(asset=symbol2.replace(symbol1.replace(Symbol_Base, ""), "")), "Compra-Comision1: ", Compra1 - Comision1)
                         
-                        print("Vendiendo ", symbol3, "Cantidad: ", Venta1 ,GetPresicion(symbol3, Venta1, ask_price3))
+                        print("\t Vendiendo ", symbol3, "Cantidad: ", Venta1, GetPresicion(symbol3, Venta1, ask_price3))
                         if OnlineMode:
                             order_details = client.create_order( 
                                 symbol = symbol3,
@@ -233,22 +199,13 @@ while Repetir:
                                 type = 'MARKET',
                                 quantity = GetPresicion(symbol3, Venta1, ask_price3)
                             )
-                            GetLastOrderInfo()
-                        #print("Balance: ", client.get_asset_balance(asset=symbol3.replace(Symbol_Base, "")), "Compra-Comision1: ", Compra1 - Comision1)
+                            GetLastOrderInfo(symbol3)
+                       
                         
                         ComisionTotal = Comisionbnb1 + Comisionbnb1 + Comisionbnb1
-                        #print("{:.20f}".format(Comision1), "{:.20f}".format(Comision2), "{:.20f}".format(Comision3))
-                        #if UsarBNB:
-                            #print(symbol1,"\t", symbol2,"\t",symbol3, "\t", "Ganancia: ", Ganancia1, Symbol_Base, "\t Comision: ", "{:.20f}".format(ComisionTotal), "BNB")
-                        #else:
-                            #print(symbol1,"\t", symbol2,"\t",symbol3, "\t", "Ganancia: ", Ganancia1, Symbol_Base)
-                        
-                        #if OnlineMode:
-                            #account_info = client.get_account()
-                            #balances = account_info['balances']
-                            #print(balances)
+                                
                         GananciaTotal = GananciaTotal + Ganancia1
-                        print("GANANCIA TOTAL DEL BOT:", GananciaTotal )
+                        print("\n GANANCIA TOTAL DEL BOT:", GananciaTotal )
     print("\n")
     if Repetir: 
         if cada_segundos > 0:
