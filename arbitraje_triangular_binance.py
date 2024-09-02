@@ -15,20 +15,22 @@ access_key = ''
 secret_key = ''
 test_access_key = ''
 test_secret_key = ''
+
 global client
 Symbol_Base = "USDT"
-Capital_Inicial = 20.1
+Capital_Inicial = 21
 USE_TESNET = True
 OnlineMode = True
 cada_segundos = 100
 Repetir = True
 UsarBNB = False
 GananciaTotal = 0
+OrderIdSaveFile = "Orders.txt"
 
 def GetPresicion(symbol, cantidad, price):
     if OnlineMode:
         info = client.get_symbol_info(symbol)
-        # # Obtener los datos de LOT_SIZE para el símbolo dado
+        print(info)
         min_qty = [Decimal(_['minQty']) for _ in info['filters'] if _['filterType'] == 'LOT_SIZE'][0]
         max_qty  = [Decimal(_['maxQty']) for _ in info['filters'] if _['filterType'] == 'LOT_SIZE'][0]
         step_size = [Decimal(_['stepSize']) for _ in info['filters'] if _['filterType'] == 'LOT_SIZE'][0]
@@ -104,110 +106,121 @@ def GetLastOrderInfo(symbol1):
             Cumulative = order["cummulativeQuoteQty"]
             # y así sucesivamente para cada campo disponible en el diccionario
             print(f"\t \t Order ID: {order_id}, Symbol: {symbol}, Monto: {monto} ,Status: {status}") #, Cumulative: {Cumulative}")
+            with open(OrderIdSaveFile, "a") as archivo:
+                archivo.write(str(order_id) + " " + symbol + " " + str(monto) + " " + status)
+
+if __name__ == '__main__':
+    print("\nInciando Bot Binance - Arbitraje Triangular...\n")
+    print("\nSe usara la siguiente configuracion: Symbol_Base", Symbol_Base, "con Capital_Inicial", Capital_Inicial, "Repetir el bot", Repetir, "\n")
+
+    if USE_TESNET == False and OnlineMode == True:
+        print("Esta a punto de usar el bot con su capital real de criptomonedas...")
+        print("Se esperara 10 segundos antes de continuar. Ctrl C para detener el bot..")
+        time.sleep(10)
+           
         
-while Repetir:
-    CrearConeccionBinance()
-    # Define la dirección URL de la API de Binance
-    url = "https://api.binance.com/api/v3/ticker/bookTicker"
+    while Repetir:
+        CrearConeccionBinance()
+        # Define la dirección URL de la API de Binance
+        url = "https://api.binance.com/api/v3/ticker/bookTicker"
 
-    # Realiza una solicitud GET a la API de Binance
-    response = requests.get(url)
+        # Realiza una solicitud GET a la API de Binance
+        response = requests.get(url)
 
-    # Verifica si la solicitud fue exitosa
-    if response.status_code == 200:
-        # Obtiene los datos de precios en formato JSON
-        prices = response.json()
+        # Verifica si la solicitud fue exitosa
+        if response.status_code == 200:
+            # Obtiene los datos de precios en formato JSON
+            prices = response.json()
 
-    all_prices = [price for price in prices]
-    bol_prices = [price for price in prices if price["symbol"].endswith(Symbol_Base)]
+        all_prices = [price for price in prices]
+        bol_prices = [price for price in prices if price["symbol"].endswith(Symbol_Base)]
 
-    # Analiza cada combinación de tres criptomonedas para determinar si existe una oportunidad de arbitraje
-    for i in range(len(bol_prices)):
-        for j in range(i + 1, len(all_prices)):
-            for k in range(j + 1, len(bol_prices)):
-                # Obtiene los precios de compra y venta de la primera criptomoneda
-                symbol1 = bol_prices[i]["symbol"]
-                bid_price1 = float(bol_prices[i]["bidPrice"])
-                ask_price1 = float(bol_prices[i]["askPrice"])
+        # Analiza cada combinación de tres criptomonedas para determinar si existe una oportunidad de arbitraje
+        for i in range(len(bol_prices)):
+            for j in range(i + 1, len(all_prices)):
+                for k in range(j + 1, len(bol_prices)):
+                    # Obtiene los precios de compra y venta de la primera criptomoneda
+                    symbol1 = bol_prices[i]["symbol"]
+                    bid_price1 = float(bol_prices[i]["bidPrice"])
+                    ask_price1 = float(bol_prices[i]["askPrice"])
 
-                # Obtiene los precios de compra y venta de la segunda criptomoneda
-                symbol2 = all_prices[j]["symbol"]
-                bid_price2 = float(all_prices[j]["bidPrice"])
-                ask_price2 = float(all_prices[j]["askPrice"])
+                    # Obtiene los precios de compra y venta de la segunda criptomoneda
+                    symbol2 = all_prices[j]["symbol"]
+                    bid_price2 = float(all_prices[j]["bidPrice"])
+                    ask_price2 = float(all_prices[j]["askPrice"])
 
-                # Obtiene los precios de compra y venta de la tercera criptomoneda
-                symbol3 = bol_prices[k]["symbol"]
-                bid_price3 = float(bol_prices[k]["bidPrice"])
-                ask_price3 = float(bol_prices[k]["askPrice"])                
-                
-                
-                # Verifica si el primer símbolo comienza con "USDT" y el tercer símbolo termina con "USDT"
-                if symbol1.endswith(Symbol_Base) and symbol2.endswith(symbol1.replace(Symbol_Base, "")) and symbol3.startswith(symbol2.replace(symbol1.replace(Symbol_Base, ""),"")) and ask_price2!=0 and ask_price3!=0 and bid_price1!=0:
-                           #BTCUSDT   		         LTCBTC   		           LTCUSDT 
-                    #COMPRO BTC con USDT     COMPRAR LTC con BTC      VENDER LTC obtengo USDT
-
-                    
-                    Compra1 = float(Capital_Inicial) / bid_price1 #BTC
-                    Comisionbnb1 = Compra1 * 0.00075
-                    Comision1 = Compra1 * 0.001
-                    if not UsarBNB and not OnlineMode: Compra1 = Compra1 - Comision1
-
-              
-                    Compra2 = Compra1 / bid_price2 #LTC
-                    Comisionbnb2 = Compra2 * 0.00075
-                    Comision2 = Compra2 * 0.001
-                    if not UsarBNB and not OnlineMode: Compra2 = Compra2 - Comision2
+                    # Obtiene los precios de compra y venta de la tercera criptomoneda
+                    symbol3 = bol_prices[k]["symbol"]
+                    bid_price3 = float(bol_prices[k]["bidPrice"])
+                    ask_price3 = float(bol_prices[k]["askPrice"])                
                     
                     
-                    Venta1 = Compra2 #* ask_price3 #USDT
-                    Comisionbnb3 = Venta1 * 0.00075
-                    Comision3 = Venta1 * 0.001
-                    if not UsarBNB and not OnlineMode: Venta2 =  Venta2 - Comision3                     
-                    
-                    Ganancia1 = (Venta1 * ask_price3) - Capital_Inicial
+                    # Verifica si el primer símbolo comienza con "USDT" y el tercer símbolo termina con "USDT"
+                    if symbol1.endswith(Symbol_Base) and symbol2.endswith(symbol1.replace(Symbol_Base, "")) and symbol3.startswith(symbol2.replace(symbol1.replace(Symbol_Base, ""),"")) and ask_price2!=0 and ask_price3!=0 and bid_price1!=0:
+                               #BTCUSDT   		         LTCBTC   		           LTCUSDT 
+                        #COMPRO BTC con USDT     COMPRAR LTC con BTC      VENDER LTC obtengo USDT
 
-                    if Ganancia1 > 0.10 and Ganancia1 < 100.0: 
-                        print("\n")
-                        print("Existe una oportunidad de arbitraje entre", symbol1, symbol2, symbol3, "con una ganancia de", Ganancia1)
                         
-                        print("\t Comprando ", symbol1, "Cantidad: ", Compra1, GetPresicion(symbol1, Compra1, bid_price1))
-                        if OnlineMode:
-                            order_details = client.create_order( 
-                                symbol = symbol1,
-                                side = 'BUY',
-                                type = 'MARKET',
-                                quantity = GetPresicion(symbol1, Compra1, bid_price1)
-                            )
-                            GetLastOrderInfo(symbol1)
+                        Compra1 = float(Capital_Inicial) / bid_price1 #BTC
+                        Comisionbnb1 = Compra1 * 0.00075
+                        Comision1 = Compra1 * 0.001
+                        if not UsarBNB and not OnlineMode: Compra1 = Compra1 - Comision1
+
+                  
+                        Compra2 = Compra1 / bid_price2 #LTC
+                        Comisionbnb2 = Compra2 * 0.00075
+                        Comision2 = Compra2 * 0.001
+                        if not UsarBNB and not OnlineMode: Compra2 = Compra2 - Comision2
                         
-                        print("\t Comprando ", symbol2, "Cantidad: ", Compra2 ,GetPresicion(symbol2, Compra2, bid_price2))
-                        if OnlineMode:
-                            order_details = client.create_order( 
-                                symbol = symbol2,
-                                side = 'BUY',
-                                type = 'MARKET',
-                                quantity = GetPresicion(symbol2, Compra2, bid_price2)
-                            )
-                            GetLastOrderInfo(symbol2)
-                        #print("Balance: ", client.get_asset_balance(asset=symbol2.replace(symbol1.replace(Symbol_Base, ""), "")), "Compra-Comision1: ", Compra1 - Comision1)
                         
-                        print("\t Vendiendo ", symbol3, "Cantidad: ", Venta1, GetPresicion(symbol3, Venta1, ask_price3))
-                        if OnlineMode:
-                            order_details = client.create_order( 
-                                symbol = symbol3,
-                                side = 'SELL',
-                                type = 'MARKET',
-                                quantity = GetPresicion(symbol3, Venta1, ask_price3)
-                            )
-                            GetLastOrderInfo(symbol3)
-                       
+                        Venta1 = Compra2 #* ask_price3 #USDT
+                        Comisionbnb3 = Venta1 * 0.00075
+                        Comision3 = Venta1 * 0.001
+                        if not UsarBNB and not OnlineMode: Venta2 =  Venta2 - Comision3                     
                         
-                        ComisionTotal = Comisionbnb1 + Comisionbnb1 + Comisionbnb1
-                                
-                        GananciaTotal = GananciaTotal + Ganancia1
-                        print("\n GANANCIA TOTAL DEL BOT:", GananciaTotal )
-    print("\n")
-    print("\n")
-    if Repetir: 
-        print("Esperando ", cada_segundos, " segundos")
-        time.sleep(cada_segundos)
+                        Ganancia1 = (Venta1 * ask_price3) - Capital_Inicial
+
+                        if Ganancia1 > 0.10 and Ganancia1 < 100.0: 
+                            print("\n")
+                            print("Existe una oportunidad de arbitraje entre", symbol1, symbol2, symbol3, "con una ganancia de", Ganancia1)
+                            
+                            print("\t Comprando ", symbol1, "Cantidad: ", GetPresicion(symbol1, Compra1, bid_price1))
+                            if OnlineMode:
+                                order_details = client.create_order( 
+                                    symbol = symbol1,
+                                    side = 'BUY',
+                                    type = 'MARKET',
+                                    quantity = GetPresicion(symbol1, Compra1, bid_price1)
+                                )
+                                GetLastOrderInfo(symbol1)
+                            
+                            print("\t Comprando ", symbol2, "Cantidad: ", GetPresicion(symbol2, Compra2, bid_price2))
+                            if OnlineMode:
+                                order_details = client.create_order( 
+                                    symbol = symbol2,
+                                    side = 'BUY',
+                                    type = 'MARKET',
+                                    quantity = GetPresicion(symbol2, Compra2, bid_price2)
+                                )
+                                GetLastOrderInfo(symbol2)
+                            
+                            print("\t Vendiendo ", symbol3, "Cantidad: ", GetPresicion(symbol3, Venta1, ask_price3))
+                            if OnlineMode:
+                                order_details = client.create_order( 
+                                    symbol = symbol3,
+                                    side = 'SELL',
+                                    type = 'MARKET',
+                                    quantity = GetPresicion(symbol3, Venta1, ask_price3)
+                                )
+                                GetLastOrderInfo(symbol3)
+                           
+                            
+                            ComisionTotal = Comisionbnb1 + Comisionbnb2 + Comisionbnb3
+                                    
+                            GananciaTotal = GananciaTotal + Ganancia1
+                            print("\n GANANCIA TOTAL DEL BOT:", GananciaTotal )
+        print("\n")
+        print("\n")
+        if Repetir: 
+            print("Esperando ", cada_segundos, " segundos")
+            time.sleep(cada_segundos)
