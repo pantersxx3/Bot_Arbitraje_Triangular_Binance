@@ -6,4 +6,6 @@ Dentro del archivo se puede encontrar los parametros de configuracion.
 
 Anda usando TESNET de binance y en modo Offline(no realiza ninguna compra solo muestra lo que podria ser)
 
+Aun no anda usando criptomonedas reales.
+
 Si alguno quiere colaborar contacteme y podremos mejorar el bot.
