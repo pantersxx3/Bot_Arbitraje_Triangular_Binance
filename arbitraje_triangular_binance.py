@@ -30,7 +30,6 @@ OrderIdSaveFile = "Orders.txt"
 def GetPresicion(symbol, cantidad, price):
     if OnlineMode:
         info = client.get_symbol_info(symbol)
-        print(info)
         min_qty = [Decimal(_['minQty']) for _ in info['filters'] if _['filterType'] == 'LOT_SIZE'][0]
         max_qty  = [Decimal(_['maxQty']) for _ in info['filters'] if _['filterType'] == 'LOT_SIZE'][0]
         step_size = [Decimal(_['stepSize']) for _ in info['filters'] if _['filterType'] == 'LOT_SIZE'][0]
