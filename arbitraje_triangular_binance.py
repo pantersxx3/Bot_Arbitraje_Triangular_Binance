@@ -171,8 +171,7 @@ while Repetir:
                 symbol3 = bol_prices[k]["symbol"]
                 bid_price3 = float(bol_prices[k]["bidPrice"])
                 ask_price3 = float(bol_prices[k]["askPrice"])
-                
-                
+                                
                 
                 # Verifica si el primer símbolo comienza con "USDT" y el tercer símbolo termina con "USDT"
                 if symbol1.endswith(Symbol_Base) and symbol2.endswith(symbol1.replace(Symbol_Base, "")) and symbol3.startswith(symbol2.replace(symbol1.replace(Symbol_Base, ""),"")) and ask_price2!=0 and ask_price3!=0 and bid_price1!=0:
@@ -199,7 +198,7 @@ while Repetir:
                     
                     Ganancia1 = Venta1 - Capital_Inicial
                     
-                    CN = check_notional(symbol1, bid_price1, Compra1, symbol2, bid_price2, Compra2, symbol3, ask_price3, Venta1)
+                    CN = True #check_notional(symbol1, bid_price1, Compra1, symbol2, bid_price2, Compra2, symbol3, ask_price3, Venta1)
 
                     if Venta1 > Capital_Inicial and Ganancia1 > 0.10 and Ganancia1 < 100.0 and CN: 
                         print("\n")
