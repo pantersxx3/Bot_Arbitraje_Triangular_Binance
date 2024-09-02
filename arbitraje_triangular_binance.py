@@ -207,9 +207,7 @@ while Repetir:
                         GananciaTotal = GananciaTotal + Ganancia1
                         print("\n GANANCIA TOTAL DEL BOT:", GananciaTotal )
     print("\n")
+    print("\n")
     if Repetir: 
-        if cada_segundos > 0:
-            print("Esperando ", cada_segundos, " segundos")
-            time.sleep(cada_segundos)
-    else: 
-        Repetir = False
+        print("Esperando ", cada_segundos, " segundos")
+        time.sleep(cada_segundos)
