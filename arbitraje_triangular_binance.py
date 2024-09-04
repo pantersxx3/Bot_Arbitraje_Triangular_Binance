@@ -11,11 +11,11 @@ from decimal import Decimal
 import ccxt
 
 # Sustituye 'access_key' y 'secret_key' por tus credenciales reales
-access_key = 'SIbij3U0FZ8QOdq6NOXGL1BTTpGwioVnO0bAwkKXFWmWGqaTz0vSp28w67ED151U'
-secret_key = 'l4Idg85lRDDNL6oEamKf8me7ZkfkJidi0FS31WkDof4jafVrWDfgreyFc3V2NefE'
+access_key = ''
+secret_key = ''
 #acceder a https://testnet.binance.vision/
-test_access_key = 'Un7s7fZ1hfhKJcTIyNCvbqUinBePlmaP5oSNbovz95faXiTOCbt7d4fUaRdZftmU'
-test_secret_key = 'Vhk1FQBpBu8UXNf7lpTtcIULE3AlbZ7RlRDVGcUXmjdC1HxbDzGusCvGPCitXhyY'
+test_access_key = ''
+test_secret_key = ''
 
 global client
 Symbol_Base = "USDT"
