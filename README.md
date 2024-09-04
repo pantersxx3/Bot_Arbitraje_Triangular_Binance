@@ -9,3 +9,12 @@ Anda usando TESNET de binance y en modo Offline(no realiza ninguna compra solo m
 Aun no anda usando criptomonedas reales.
 
 Si alguno quiere colaborar contacteme y podremos mejorar el bot.
+
+INSTLACION
+-----------
+
+-Requiere tener instalado python(mejor si es la ultima version https://www.python.org/downloads/)
+-Abrimos cmd en windows
+-pip install -r requirements.txt
+-Editar el archivo arbitraje_triangular_binance.py para cambiar configuracion y agregar las api de Binanace
+-Ejecutar: python arbitraje_triangular_binance.py
