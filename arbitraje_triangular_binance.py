@@ -347,9 +347,11 @@ if __name__ == '__main__':
                                         print("\nGANANCIA TOTAL DEL BOT:", round(GananciaTotal, 3), "COMISION TOTAL GASTADA:", round(ComisionTotal,3))
                                     else:    
                                         print("\nGANANCIA TOTAL DEL BOT:", round(GananciaTotal, 3))
+                                else:
+                                    print("No se ha encontrado ninguna combinación con ganancias positivas...")
             if Repetir: 
-                print("Esperando", cada_segundos, "segundos\n")
+                print("\nEsperando", cada_segundos, "segundos\n")
                 time.sleep(cada_segundos)
                 
     except Exception as e:
-            print("Main:", str(e))
+            print("\nMain:", str(e))
