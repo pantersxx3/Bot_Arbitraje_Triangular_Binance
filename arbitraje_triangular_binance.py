@@ -296,7 +296,9 @@ if __name__ == '__main__':
                                 print("\n \t" + str(e))
                                 exit(1)
                                 
-                            Ganancia1 = (Venta1 * ask_price3) - Capital_Inicial     
+                            Ganancia1 = (Venta1 * ask_price3) - Capital_Inicial  
+                            print("El arbitraje entre", symbol1, symbol2, symbol3, "dio una ganancia de", round(Ganancia1, 3))   
+                            
                             GananciaTotal = GananciaTotal + Ganancia1
                             if UsarBNB:
                                 ComisionTotal = ComisionTotal + ComisionTotalbnb
