@@ -18,13 +18,13 @@ global client
 #Puedes probar como base BNB o BUSD
 Symbol_Base = "USDT"
 #La cantidad de criptos bases que usaras par operar
-Capital_Inicial = 21
+Capital_Inicial = 20
 #Si lo habilitas junto con OnlineMode usaras la red tesnet sin gastar criptos reales
 Use_Tesnet = True
 #necesario para operar en modo tesnet y modo real
-OnlineMode = True
+OnlineMode = False
 #Periodo de tiempo en el que esperaras a la siguente ronda de busqueda de los tres pares
-cada_segundos = 100
+cada_segundos = 60
 #Repetira indefinidamente o terminara en la primera vuelta
 Repetir = True
 #Si es verdadero pagaras tus transacciones con BNB en ves de usar comision de las operaiciones
@@ -136,7 +136,7 @@ def GetLastOrderInfo(symbol1):
                 # y así sucesivamente para cada campo disponible en el diccionario
                 print(f"\t \t Order ID: {order_id}, Symbol: {symbol}, Monto: {monto} ,Status: {status}") #, Cumulative: {Cumulative}")
                 with open(OrderIdSaveFile, "a") as archivo:
-                    archivo.write(str(order_id) + " " + symbol + " " + str(monto) + " " + status + "/n")
+                    archivo.write(str(order_id) + " " + symbol + " " + str(monto) + " " + status + "\n")
     except Exception as e:
             print("GetLastOrderInfo:", str(e))
             
@@ -182,9 +182,13 @@ if __name__ == '__main__':
             bol_prices = [price for price in prices if price["symbol"].endswith(Symbol_Base)]
 
             # Analiza cada combinación de tres criptomonedas para determinar si existe una oportunidad de arbitraje
-            for i in range(len(bol_prices)):
-                for j in range(i + 1, len(all_prices)):
-                    for k in range(j + 1, len(bol_prices)):
+            size_bol_prices = len(bol_prices)
+            size_all_prices = len(all_prices)
+            
+            print("Buscando en", size_all_prices, "pares...\n") 
+            for i in range(size_bol_prices):
+                for j in range(i + 1, size_all_prices):
+                    for k in range(j + 1, size_bol_prices):
                         # Obtiene los precios de compra y venta de la primera criptomoneda
                         symbol1 = bol_prices[i]["symbol"]
                         bid_price1 = Decimal(bol_prices[i]["bidPrice"])
@@ -220,9 +224,8 @@ if __name__ == '__main__':
                         symbol3_part1 = symbol2_part1
                                             
                                             
-                        # Verifica si el primer símbolo termina con "USDT" y el tercer símbolo termina con "USDT"   #falta mejorar este filtro
-                        if symbol1.endswith(Symbol_Base) and symbol2.endswith(symbol1.replace(Symbol_Base, "")) and symbol3.startswith(symbol2.replace(symbol1.replace(Symbol_Base, ""),"")) and ask_price2!=0 and ask_price3!=0 and bid_price1!=0:
-                        #if symbol1.endswith(Symbol_Base) and symbol1_part1 in symbol2 and symbol3.replace(symbol2_part1, "") == Symbol_Base and ask_price2!=0 and ask_price3!=0 and bid_price1!=0:
+                        # Verifica si el primer símbolo termina con "USDT" y el tercer símbolo termina con "USDT"
+                        if symbol1.replace(Symbol_Base, "") == symbol1_part1 and symbol2.replace(symbol2_part2, "") == symbol2_part1  and symbol3.replace(symbol3_part1, "") == Symbol_Base and ask_price2!=0 and ask_price3!=0 and bid_price1!=0:
                                    #BTCUSDT   		         LTCBTC   		           LTCUSDT 
                             #COMPRO BTC con USDT     COMPRAR LTC con BTC      VENDER LTC obtengo USDT
                             
@@ -243,19 +246,18 @@ if __name__ == '__main__':
                                 Compra2 = Compra2 - Comision2                           
                             
                             
-                            Venta1 = Compra2 #* ask_price3 #USDT
+                            Venta1 = Compra2 * ask_price3 #USDT
                             if UsarBNB:
                                 Comisionbnb3 = Venta1 * DescuentoComisionBNB
                             else:
                                 Comision3 = Venta1 * DescuentoComision
                                 Venta1 =  Venta1 - Comision3                     
                             
-                            Ganancia1 = (Venta1 * ask_price3) - Capital_Inicial
+                            Ganancia1 = Venta1 - Capital_Inicial
                             #HASTA AQUI <======
+                            if Debug: print(symbol1, symbol2, symbol3, "Ganancia Estimativa:", round(Ganancia1, 3), "Venta1:", round(Venta1, 3))
                             
-                            #el filtro que no anda bien deja pasar monedas parecidas y con montos enormes
-                            if Ganancia1 > 0.10 and Ganancia1 <= 1.0: 
-                                print("\n")
+                            if Ganancia1 > 0:  
                             
                                 #DESDE AQUI <==== CALCULO PRECISO DE CADA OPERACION
                                 Compra1 = Capital_Inicial / bid_price1 #BTC
@@ -276,63 +278,66 @@ if __name__ == '__main__':
                                     Compra2 = presicion2 - Comision2
                                     
                                 
-                                Venta1 = Compra2 #* ask_price3 #USDT
+                                Venta1 = Compra2 * ask_price3 #USDT
                                 if UsarBNB: 
                                     Comisionbnb3 = Venta1 * DescuentoComisionBNB
                                 else:
+                                    presicionfinal = GetPresicion(symbol3, Compra2)
                                     presicion3 = GetPresicion(symbol3, Venta1)
                                     Comision3 = presicion3 * DescuentoComision
                                     Venta1 =  presicion3 - Comision3 
                                     
-                                Ganancia1 = (Venta1 * ask_price3) - Capital_Inicial  
+                                Ganancia1 = Venta1 - Capital_Inicial  
                                 #HASTA AQUI <=======
                                 
-                                if Ganancia1 > 0.10 and Ganancia1 <= 1.0: #aplico un segundo filtro porqe suele dar negativa la ganancia aunque dio positivo antes
-                                    print("Existe una oportunidad de arbitraje entre", symbol1, symbol2, symbol3, "con una ganancia estimativa de", round(Ganancia1, 3))   
-                                    try: 
-                                        if OnlineMode:                                
-                                            print("\t Comprando ", symbol1, "Cantidad: ", presicion1, symbol2_part2)
-                                            order_details = client.create_order( 
-                                                symbol = symbol1,
-                                                side = 'BUY',
-                                                type = 'MARKET',
-                                                quantity = presicion1
-                                            )
-                                            GetLastOrderInfo(symbol1)
-                                            #print("\t Balance:", client.get_asset_balance(asset=symbol2_part2)['free'], symbol2_part2)
-                                    except Exception as e:
-                                        print("\n \t" + str(e))
-                                        exit(1)
-                                         
-                                    try:
-                                        print("\t Comprando ", symbol2, "Cantidad: ", presicion2, symbol2_part1)
-                                        if OnlineMode:
-                                            order_details = client.create_order( 
-                                                symbol = symbol2,
-                                                side = 'BUY',
-                                                type = 'MARKET',
-                                                quantity = presicion2
-                                            )
-                                            GetLastOrderInfo(symbol2)
-                                            #print("\t Balance:", client.get_asset_balance(asset=symbol2_part1)['free'], symbol2_part1)
-                                    except Exception as e:
-                                        print("\n \t" + str(e))
-                                        exit(1)
-                                        
-                                    try:
-                                        print("\t Vendiendo ", symbol3, "Cantidad: ", presicion3, symbol3_part1)
-                                        if OnlineMode:
-                                            order_details = client.create_order( 
-                                                symbol = symbol3,
-                                                side = 'SELL',
-                                                type = 'MARKET',
-                                                quantity = presicion3
-                                            )
-                                            GetLastOrderInfo(symbol3)
-                                            #print("Balance:", client.get_asset_balance(asset=Symbol_Base)['free'], Symbol_Base)
-                                    except Exception as e:
-                                        print("\n \t" + str(e))
-                                        exit(1)
+                                if Debug: print(symbol1, symbol2, symbol3, "Ganancia real:", round(Ganancia1, 3), "Venta1:", round(Venta1, 3))
+                                if Ganancia1 > 0:
+                                    print("\nExiste una oportunidad de arbitraje entre", symbol1, symbol2, symbol3, "con una ganancia estimativa de", round(Ganancia1, 3))   
+                                    if OnlineMode:
+                                        try: 
+                                            if OnlineMode:                                
+                                                print("\t Comprando ", symbol1, "Cantidad: ", presicion1, symbol2_part2)
+                                                order_details = client.create_order( 
+                                                    symbol = symbol1,
+                                                    side = 'BUY',
+                                                    type = 'MARKET',
+                                                    quantity = presicion1
+                                                )
+                                                GetLastOrderInfo(symbol1)
+                                                #print("\t Balance:", client.get_asset_balance(asset=symbol2_part2)['free'], symbol2_part2)
+                                        except Exception as e:
+                                            print("\n \t" + str(e))
+                                            exit(1)
+                                             
+                                        try:
+                                            print("\t Comprando ", symbol2, "Cantidad: ", presicion2, symbol2_part1)
+                                            if OnlineMode:
+                                                order_details = client.create_order( 
+                                                    symbol = symbol2,
+                                                    side = 'BUY',
+                                                    type = 'MARKET',
+                                                    quantity = presicion2
+                                                )
+                                                GetLastOrderInfo(symbol2)
+                                                #print("\t Balance:", client.get_asset_balance(asset=symbol2_part1)['free'], symbol2_part1)
+                                        except Exception as e:
+                                            print("\n \t" + str(e))
+                                            exit(1)
+                                            
+                                        try:
+                                            print("\t Vendiendo ", symbol3, "Cantidad: ", presicionfinal, symbol3_part1)
+                                            if OnlineMode:
+                                                order_details = client.create_order( 
+                                                    symbol = symbol3,
+                                                    side = 'SELL',
+                                                    type = 'MARKET',
+                                                    quantity = presicionfinal
+                                                )
+                                                GetLastOrderInfo(symbol3)
+                                                #print("Balance:", client.get_asset_balance(asset=Symbol_Base)['free'], Symbol_Base)
+                                        except Exception as e:
+                                            print("\n \t" + str(e))
+                                            exit(1)
 
                                     print("El arbitraje entre", symbol1, symbol2, symbol3, "dio una ganancia de", round(Ganancia1, 3))   
                                     
@@ -342,8 +347,6 @@ if __name__ == '__main__':
                                         print("\nGANANCIA TOTAL DEL BOT:", round(GananciaTotal, 3), "COMISION TOTAL GASTADA:", round(ComisionTotal,3))
                                     else:    
                                         print("\nGANANCIA TOTAL DEL BOT:", round(GananciaTotal, 3))
-            print("\n")
-            print("\n")
             if Repetir: 
                 print("Esperando ", cada_segundos, " segundos")
                 time.sleep(cada_segundos)
