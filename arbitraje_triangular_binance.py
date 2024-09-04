@@ -295,7 +295,8 @@ if __name__ == '__main__':
                             except Exception as e:
                                 print("\n \t" + str(e))
                                 exit(1)
-                                 
+                                
+                            Ganancia1 = (Venta1 * ask_price3) - Capital_Inicial     
                             GananciaTotal = GananciaTotal + Ganancia1
                             if UsarBNB:
                                 ComisionTotal = ComisionTotal + ComisionTotalbnb
