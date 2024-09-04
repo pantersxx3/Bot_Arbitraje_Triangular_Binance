@@ -348,7 +348,7 @@ if __name__ == '__main__':
                                     else:    
                                         print("\nGANANCIA TOTAL DEL BOT:", round(GananciaTotal, 3))
             if Repetir: 
-                print("Esperando ", cada_segundos, " segundos")
+                print("Esperando", cada_segundos, "segundos\n")
                 time.sleep(cada_segundos)
                 
     except Exception as e:
