@@ -8,25 +8,37 @@ from sys import exit
 from decimal import Decimal
 
 # Sustituye 'access_key' y 'secret_key' por tus credenciales reales
-access_key = 'H07JP3NjNLOXiwhJYisQTa3SqTZklSHHB1i6OCQWr4Jvvoci3dbhJuGaxGadVFby'
-secret_key = '9YI0KfynLjQbGd4TOpvt99999a2RetSzgTIgl3pbOv2Ax1WJnb8qec3rb6eyx3n5'
+access_key = ''
+secret_key = ''
 #acceder a https://testnet.binance.vision/
-test_access_key = 'Un7s7fZ1hfhKJcTIyNCvbqUinBePlmaP5oSNbovz95faXiTOCbt7d4fUaRdZftmU'
-test_secret_key = 'Vhk1FQBpBu8UXNf7lpTtcIULE3AlbZ7RlRDVGcUXmjdC1HxbDzGusCvGPCitXhyY'
+test_access_key = ''
+test_secret_key = ''
 
 global client
+#Puedes probar como base BNB o BUSD
 Symbol_Base = "USDT"
+#La cantidad de criptos bases que usaras par operar
 Capital_Inicial = 21
+#Si lo habilitas junto con OnlineMode usaras la red tesnet sin gastar criptos reales
 Use_Tesnet = True
+#necesario para operar en modo tesnet y modo real
 OnlineMode = True
+#Periodo de tiempo en el que esperaras a la siguente ronda de busqueda de los tres pares
 cada_segundos = 100
+#Repetira indefinidamente o terminara en la primera vuelta
 Repetir = True
+#Si es verdadero pagaras tus transacciones con BNB en ves de usar comision de las operaiciones
 UsarBNB = False
+#Comision si se usa BNB para usuarios VIP0(usuario normal)
+DescuentoComisionBNB = 0.00075
+#Comision si no usas BNB, se te descontara de cada operacion
+DescuentoComision = 0.001
+#Muestra algunos mensjes extras de control
+Debug = False
+
 GananciaTotal = 0
 OrderIdSaveFile = "Orders.txt"
-DescuentoComisionBNB = 0.00075
-DescuentoComision = 0.001
-Debug = False
+
 
 def GetPresicion(symbol, monto):
     try:
