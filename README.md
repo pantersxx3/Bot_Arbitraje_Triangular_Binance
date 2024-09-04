@@ -13,7 +13,7 @@ Anda usando TESNET de binance y en modo Offline(no realiza ninguna compra solo m
 
 Aun no anda usando criptomonedas reales.
 
-Si alguno quiere colaborar contacteme y podremos mejorar el bot.
+Si alguno quiere colaborar contacteme y podremos mejorar el bot. DISCORD: pantersxx3\
 
 INSTLACION
 -----------
