@@ -4,6 +4,8 @@
 
 ![image](https://github.com/user-attachments/assets/d82823bb-7bf3-4522-8d18-4d85ac2c8a9b)
 
+INFORMACION
+------------
 
 Dentro del archivo se puede encontrar los parametros de configuracion.
 
@@ -25,3 +27,7 @@ INSTLACION
 -Editar el archivo arbitraje_triangular_binance.py para cambiar configuracion y agregar las api de Binanace
 
 -Ejecutar: python arbitraje_triangular_binance.py
+
+CONFIGURACION
+--------------
+Ver el interior del bot, en el mismo py.
