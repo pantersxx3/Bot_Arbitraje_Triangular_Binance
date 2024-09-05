@@ -22,17 +22,17 @@ Capital_Inicial = 20
 #Si lo habilitas junto con OnlineMode usaras la red tesnet sin gastar criptos reales
 Use_Tesnet = True
 #necesario para operar en modo tesnet y modo real
-OnlineMode = False
+OnlineMode = True
 #Periodo de tiempo en el que esperaras a la siguente ronda de busqueda de los tres pares
 cada_segundos = 60
 #Repetira indefinidamente o terminara en la primera vuelta
 Repetir = True
 #Si es verdadero pagaras tus transacciones con BNB en ves de usar comision de las operaiciones
-UsarBNB = False
+UsarBNB = True
 #Comision si se usa BNB para usuarios VIP0(usuario normal)
 DescuentoComisionBNB = 0.00075
 #Comision si no usas BNB, se te descontara de cada operacion
-DescuentoComision = 0.001
+DescuentoComision = 0.999
 #Muestra algunos mensjes extras de control
 Debug = False
 
@@ -59,6 +59,7 @@ def GetPresicion(symbol, monto):
         
     except Exception as e:
         print("GetPresicion:", str(e))
+        print("Error en linea:", sys.exc_info()[-1].tb_lineno, "\n")
         
 def test_api_key(client, BinanceAPIException):
     """Checks to see if API keys supplied returns errors
@@ -119,6 +120,7 @@ def CrearConeccionBinance():
                     exit(f'Error al crear coneccion: {msg}') 
     except Exception as e:
             print("CrearConeccionBinance:", str(e))
+            print("Error en linea:", sys.exc_info()[-1].tb_lineno, "\n")
             
 def GetLastOrderInfo(symbol1):
     try:
@@ -139,6 +141,7 @@ def GetLastOrderInfo(symbol1):
                     archivo.write(str(order_id) + " " + symbol + " " + str(monto) + " " + status + "\n")
     except Exception as e:
             print("GetLastOrderInfo:", str(e))
+            print("Error en linea:", sys.exc_info()[-1].tb_lineno, "\n")
             
 if __name__ == '__main__':
     try:
@@ -157,7 +160,6 @@ if __name__ == '__main__':
         print("            ╚═╝└─┘ ┴   ╚═╝┴┘└┘┴ ┴┘└┘└─┘└─┘")
         print("\n                                by Horacio Fanelli...\n")
         
-        #print("\nSe usara la siguiente configuracion: Symbol_Base", Symbol_Base, "con Capital_Inicial", Capital_Inicial, "Repetir el bot", Repetir, "\n")
 
         if Use_Tesnet == False and OnlineMode == True:
             print("Esta a punto de usar el bot con su capital real de criptomonedas...")
@@ -262,7 +264,8 @@ if __name__ == '__main__':
                                 #DESDE AQUI <==== CALCULO PRECISO DE CADA OPERACION
                                 Compra1 = Capital_Inicial / bid_price1 #BTC
                                 if UsarBNB: 
-                                    Comisionbnb1 = Compra1 * DescuentoComisionBNB 
+                                    Comisionbnb1 = float(Compra1 * DescuentoComisionBNB)
+                                    presicion1 = GetPresicion(symbol1, Compra1)
                                 else: 
                                     presicion1 = GetPresicion(symbol1, Compra1)
                                     Comision1 = presicion1 * DescuentoComision
@@ -271,7 +274,8 @@ if __name__ == '__main__':
                           
                                 Compra2 = Compra1 / bid_price2 #LTC
                                 if UsarBNB: 
-                                    Comisionbnb2 = Compra2 * DescuentoComisionBNB
+                                    Comisionbnb2 = float(Compra2 * DescuentoComisionBNB)
+                                    presicion2 = GetPresicion(symbol2, Compra2)
                                 else: 
                                     presicion2 = GetPresicion(symbol2, Compra2)
                                     Comision2 = presicion2 * DescuentoComision
@@ -280,7 +284,8 @@ if __name__ == '__main__':
                                 
                                 Venta1 = Compra2 * ask_price3 #USDT
                                 if UsarBNB: 
-                                    Comisionbnb3 = Venta1 * DescuentoComisionBNB
+                                    Comisionbnb3 = float(Venta1 * DescuentoComisionBNB)
+                                    presicionfinal = GetPresicion(symbol3, Compra2)
                                 else:
                                     presicionfinal = GetPresicion(symbol3, Compra2)
                                     presicion3 = GetPresicion(symbol3, Venta1)
@@ -295,8 +300,11 @@ if __name__ == '__main__':
                                     print("\nExiste una oportunidad de arbitraje entre", symbol1, symbol2, symbol3, "con una ganancia estimativa de", round(Ganancia1, 3))   
                                     if OnlineMode:
                                         try: 
-                                            if OnlineMode:                                
-                                                print("\t Comprando ", symbol1, "Cantidad: ", presicion1, symbol2_part2)
+                                            if OnlineMode:  
+                                                if UsarBNB:
+                                                    print("\t Comprando:", symbol1, "Cantidad:", presicion1, symbol2_part2, "Comision:", f"{Comisionbnb1:.8f}", "BNB", "Comision a USDT:",  f"{(Comisionbnb1*512.7):.8f}")
+                                                else:
+                                                    print("\t Comprando:", symbol1, "Cantidad:", presicion1, symbol2_part2)
                                                 order_details = client.create_order( 
                                                     symbol = symbol1,
                                                     side = 'BUY',
@@ -307,10 +315,14 @@ if __name__ == '__main__':
                                                 #print("\t Balance:", client.get_asset_balance(asset=symbol2_part2)['free'], symbol2_part2)
                                         except Exception as e:
                                             print("\n \t" + str(e))
+                                            print("Error en linea:", sys.exc_info()[-1].tb_lineno, "\n")
                                             exit(1)
                                              
                                         try:
-                                            print("\t Comprando ", symbol2, "Cantidad: ", presicion2, symbol2_part1)
+                                            if UsarBNB:
+                                                print("\t Comprando:", symbol2, "Cantidad:", presicion2, symbol2_part1, "Comision:", f"{Comisionbnb2:.5f}", "BNB", "Comision a USDT:",  f"{(Comisionbnb2*512.7):.8f}")
+                                            else:
+                                                print("\t Comprando:", symbol2, "Cantidad:", presicion2, symbol2_part1)
                                             if OnlineMode:
                                                 order_details = client.create_order( 
                                                     symbol = symbol2,
@@ -322,10 +334,14 @@ if __name__ == '__main__':
                                                 #print("\t Balance:", client.get_asset_balance(asset=symbol2_part1)['free'], symbol2_part1)
                                         except Exception as e:
                                             print("\n \t" + str(e))
+                                            print("Error en linea:", sys.exc_info()[-1].tb_lineno, "\n")
                                             exit(1)
                                             
                                         try:
-                                            print("\t Vendiendo ", symbol3, "Cantidad: ", presicionfinal, symbol3_part1)
+                                            if UsarBNB:
+                                                print("\t Vendiendo:", symbol3, "Cantidad: ", presicionfinal, "Comision:", f"{Comisionbnb3:.5f}", "BNB", "Comision a USDT:",  f"{(Comisionbnb1*512.7):.8f}")
+                                            else:
+                                                print("\t Vendiendo:", symbol3, "Cantidad: ", presicionfinal, symbol3_part1)
                                             if OnlineMode:
                                                 order_details = client.create_order( 
                                                     symbol = symbol3,
@@ -337,14 +353,16 @@ if __name__ == '__main__':
                                                 #print("Balance:", client.get_asset_balance(asset=Symbol_Base)['free'], Symbol_Base)
                                         except Exception as e:
                                             print("\n \t" + str(e))
+                                            print("Error en linea:", sys.exc_info()[-1].tb_lineno, "\n")
                                             exit(1)
 
                                     print("El arbitraje entre", symbol1, symbol2, symbol3, "dio una ganancia de", round(Ganancia1, 3))   
                                     
                                     GananciaTotal = GananciaTotal + Ganancia1
+                                    ComisionTotalbnb = Comisionbnb1 + Comisionbnb2 + Comisionbnb3
                                     if UsarBNB:
                                         ComisionTotal = ComisionTotal + ComisionTotalbnb
-                                        print("\nGANANCIA TOTAL DEL BOT:", round(GananciaTotal, 3), "COMISION TOTAL GASTADA:", round(ComisionTotal,3))
+                                        print("\nGANANCIA TOTAL DEL BOT:", round(GananciaTotal, 3), "COMISION TOTAL GASTADA:", round(ComisionTotal,3), "BNB")
                                     else:    
                                         print("\nGANANCIA TOTAL DEL BOT:", round(GananciaTotal, 3))
                                 else:
@@ -355,3 +373,4 @@ if __name__ == '__main__':
                 
     except Exception as e:
             print("\nMain:", str(e))
+            print("Error en linea:", sys.exc_info()[-1].tb_lineno, "\n")
